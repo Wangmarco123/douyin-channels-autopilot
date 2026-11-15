@@ -1,0 +1,21 @@
+{
+  "_说明": "复制成 config.json 再改。相对路径按 config.json 所在目录解析。",
+
+  "ffmpeg": "ffmpeg",
+  "ffprobe": "ffprobe",
+
+  "font_bold": "C:/Windows/Fonts/msyhbd.ttc",
+  "font_regular": "C:/Windows/Fonts/msyh.ttc",
+
+  "bgm_dir": "./assets/bgm",
+  "work_dir": "./work",
+  "out_dir": "./out",
+
+  "sau_dir": "",
+  "sau_python": "",
+
+  "pad": 0.26,
+  "lead": 0.3,
+  "tail": 0.85,
+  "bgm_volume": 0.135
+}

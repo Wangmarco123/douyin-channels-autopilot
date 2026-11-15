@@ -1,0 +1,47 @@
+{
+  "_说明": "分镜表示例。src 用相对本文件的路径；out 相对本文件。bgm 放在 assets/bgm/ 里写文件名即可。",
+
+  "tag": "作品A",
+  "voice": "zh-CN-YunjianNeural",
+  "rate": "+10%",
+  "bgm": "your-bgm.mp3",
+  "out": "../out/作品A.mp4",
+
+  "segments": [
+    {
+      "kind": "photo",
+      "src": "../assets/img/01.jpg",
+      "motion": "in",
+      "zoom": 1.13,
+      "vo": "开场第一句话，决定前 3 秒留不留人。",
+      "card": "100% 侧面撞击",
+      "card_color": "gold"
+    },
+    {
+      "kind": "card",
+      "src": "../work/cards/card_shot.png",
+      "zoom": 1.035,
+      "vo": "截图类素材先做成悬浮卡再进分镜，别直接拉伸。",
+      "card": "5981km",
+      "card_color": "gold"
+    },
+    {
+      "kind": "video",
+      "src": "../assets/vid/test.mp4",
+      "ss": 21.0,
+      "to": 24.6,
+      "vo": "16:9 的素材按旁白长度自动变速，最短不要短于 0.55 倍速。",
+      "card": "官方测试"
+    },
+    {
+      "kind": "photo",
+      "src": "../assets/img/02.jpg",
+      "motion": "right",
+      "zoom": 1.20,
+      "extra": 0.3,
+      "vo": "extra 可以给这一段多留 0.3 秒呼吸。",
+      "card": "收尾金句",
+      "card_color": "gold"
+    }
+  ]
+}
