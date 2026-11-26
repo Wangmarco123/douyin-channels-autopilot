@@ -5,6 +5,10 @@
 一条把「口播稿 → 竖版成片 → 发布」串起来的流水线。不是灵感工具，是生产线：
 输入分镜表（每段一句口播 + 一张素材），输出可直接发布的成片，并能自动发到抖音与视频号。
 
+![效果示意：竖屏成片帧 / 3:4 封面 / 发布前质检输出](docs/images/hero.png)
+
+<sub>示意图为程序化占位渲染（背景是生成的电影感底图），不含任何品牌素材。</sub>
+
 ---
 
 ## 它和普通剪辑不一样的地方
@@ -71,6 +75,29 @@ python -m autopilot publish douyin \
   --thumbnail out/封面A.jpg
 ```
 
+## 发布前质检门（`qc`）
+
+成片出来后，**先过门再发布**：
+
+```bash
+python -m autopilot qc out/final.mp4 --expect-duration 35.5
+```
+
+5 项判定，任一不过退出码 1：
+
+| 检查 | 阈值 | 拦的是什么 |
+|---|---|---|
+| 音视频时长一致 | ±0.30s | `amix duration=first` 造成的片尾静音 |
+| 片尾非静音 | RMS > -60 dBFS | 黑屏/静音片尾被判低质 |
+| 无削波 | 峰值 ≤ -1.0 dBFS | 爆音 |
+| 周期性瞬态 | ≤ 4 处 | 每个切点塞一条音效的典型症状 |
+| 瞬态频谱重心 | < 6 kHz | 高频噪声型 whoosh（"噗呲"元凶） |
+
+为什么要有这道门：两次真实返工都不是画面问题——一次是每个切点加了自合成噪声 whoosh
+（频谱重心 8.3kHz，17 个切点叠成"噗呲噗呲"），一次是混音写成 `amix duration=first`
+导致 35.5 秒的片子最后 2 秒没声音。**肉眼看不出来，只能靠测量。**
+详见 [06-audio-rules.md](docs/06-audio-rules.md)。
+
 ## 目录
 
 ```
@@ -78,23 +105,28 @@ autopilot/
   config.py    配置加载 + 环境自检
   engine.py    成片装配（配音对齐 / KenBurns / 模糊填充 / ASS 字幕 / BGM 响度）
   cards.py     卡片与封面（截图悬浮卡 / 数据卡 / 片尾卡 / 3:4 封面）
+  qc.py        发布前音频质检门（5 项测量，不过不发）
   publish.py   发布封装 + 平台硬约束校验
   cli.py       命令行入口
 docs/
   01-install.md      环境与安装
   02-production.md   分镜表字段、音色、素材预处理、调参
   03-publish.md      两平台发布参数与自检
-  04-gotchas.md      ⭐ 15 个踩过的坑（现象→原因→解法）
+  04-gotchas.md      ⭐ 20 个踩过的坑（现象→原因→解法）
   05-compliance.md   ⭐ 合规红线与上线前自检表
+  06-audio-rules.md  ⭐ 音频铁律（"噗呲"事故复盘 + 混音配方）
+  07-brief-checklist.md ⭐ 共创 brief 核查表（平台/时长/话题/回传）
 examples/            最小可跑示例（自动生成素材）
 assets/              素材占位目录（img / vid / bgm，不提交内容）
 SKILL.md             Agent skill 入口（可直接放进 Claude Code / Codex / DSH 的 skills）
 ```
 
-## 两页最值钱的文档
+## 最值钱的几页文档
 
-- **[04-gotchas.md](docs/04-gotchas.md)** — 15 条真机踩坑：视频号定时为什么会卡死、抖音定时怎么改成立即发而不用重传、混音为什么莫名小 6dB、中文字幕为什么变方块、素材里的黑场怎么定位、字幕为什么闪 0.4 秒……
+- **[04-gotchas.md](docs/04-gotchas.md)** — 20 条真机踩坑：视频号定时为什么会卡死、抖音定时怎么改成立即发而不用重传、混音为什么莫名小 6dB、中文字幕为什么变方块、素材里的黑场怎么定位、字幕为什么闪 0.4 秒、PNG 静帧为什么让 ffmpeg 卡死……
 - **[05-compliance.md](docs/05-compliance.md)** — 事实校验、绝对化用语、隐私打码、AI 声明、平台条款，以及一张 30 秒上线自检表。
+- **[06-audio-rules.md](docs/06-audio-rules.md)** — 音频铁律：两次返工的实测数据（whoosh 频谱重心 8.3kHz、`amix duration=first` 造成片尾静音）与正确混音配方。
+- **[07-brief-checklist.md](docs/07-brief-checklist.md)** — 共创 brief 核查表：平台/窗口/时长/话题/植入话术/封面/回传，逐条勾。
 
 ## 输出规格
 

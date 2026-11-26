@@ -194,3 +194,49 @@ AI 配音 / AI 字幕 / AI 生图属于应声明范围，**保留即可**，也�
 否则容易重复投稿。
 
 本仓库不做自动重试，就是为了避免这一点。
+---
+
+## 16. 特定 PNG + `-loop 1` 会让 ffmpeg 卡死
+
+**现象**：一张静帧渲染 10 分钟不结束，产物只有 48 字节；日志刷 `Invalid PNG signature 0x20202020`。
+
+**原因**：部分 RGBA / 带色彩配置的大 PNG 在 `-loop 1` 下解码异常，错误刷屏把 stderr 管道塞满
+（配合 `subprocess.capture_output` 直接死锁）。
+
+**做法**：
+- 图片先统一转 JPG 再进 `-loop 1`；
+- ffmpeg 一律 `-nostdin -hide_banner -loglevel error`，stderr 落文件；
+- 同时保留 `-frames:v N` 与 `-t`，只靠 `-t` 浮点容易多帧少帧。
+
+## 17. PowerShell 写出来的 JSON 带 BOM
+
+**现象**：`json.load` 抛 `Unexpected UTF-8 BOM (decode using utf-8-sig)`。
+
+**原因**：`Set-Content -Encoding UTF8`（PowerShell 5.1）会写 `EF BB BF`。
+
+**做法**：读取一律 `encoding="utf-8-sig"`；写文件用
+`[IO.File]::WriteAllText(path, s, (New-Object Text.UTF8Encoding($false)))`。
+
+## 18. Windows 控制台 GBK，print 中文/emoji 直接崩
+
+**现象**：脚本功能正常，但最后 `print("全部通过")` 抛 `UnicodeEncodeError: gbk codec`，退出码非 0。
+
+**做法**：入口处 `sys.stdout.reconfigure(encoding="utf-8", errors="replace")`（stderr 同理），少用 emoji。
+
+## 19. 抖音自动封面常是片头黑帧
+
+**现象**：发布后列表封面是黑的。
+
+**原因**：片子开头有 0.25s 淡入，平台取的是第 0 帧。
+
+**做法**：发布后进「内容管理 → 编辑作品 → 竖封面 3:4 → 编辑封面 → 上传封面」换成定制封面，
+再「提交修改」（会重新过审）。接口没有封面参数，只能 UI 改。
+
+## 20. 视频号 cookie 7~14 天失效，且「check 通过」不代表能发
+
+**现象**：`sau tencent check` 返回 valid，`upload-video` 却报"被跳转到登录页"。
+
+**原因**：只存了 `sessionid` + `wxuin` 两个 cookie，服务端 session 已失效。
+
+**做法**：发布日当天先跑一次真实上传前检查；失败就 `sau tencent login --headed` 扫码（二维码 60s 有效）。
+另注意 `sau` 会清洗短标题标点，`26.99万起` 会变成 `2699万起` —— **别把价格写进短标题**。

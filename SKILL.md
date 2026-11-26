@@ -21,8 +21,9 @@ description: 抖音 / 微信视频号竖版短视频自动化：分段配音自�
 ```
 1. 写分镜表              每个分镜 = 一段口播 + 一张图/一段视频 + 可选花字
 2. python -m autopilot build    → 出成片（自动配音/字幕/调色/响度）
-3. python -m autopilot cover    → 出 3:4 封面
-4. python -m autopilot publish  → 发布（带前置校验）
+3. python -m autopilot qc       → 发布前音频质检门（5 项，不过不发）
+4. python -m autopilot cover    → 出 3:4 封面
+5. python -m autopilot publish  → 发布（带前置校验）
 ```
 
 ## 关键约定（务必遵守）
@@ -37,15 +38,21 @@ description: 抖音 / 微信视频号竖版短视频自动化：分段配音自�
 8. **视频号不要用定时发布** —— 上游定时选择器会把表单点乱，发表必然失败。只立即发。
 9. **抖音定时想改立即**：创作者中心 → 作品 → 「修改定时」→ 发布方式选「立即发布」→ 确定（不用重传）。
 10. **响度归一 -14 LUFS**；`amix` 必须 `normalize=0`，否则整体被砍 6dB。
+11. **混音禁止 `amix duration=first`**（第一路是配音时整条音轨会跟着配音结束，片尾静音）：
+    配音先 `apad=whole_dur=<成片时长>`，混音用 `duration=longest`，输出端再 `-t` 兜底。
+12. **不要给每个切点加合成音效**。宽带噪声 whoosh 的频谱重心在 8kHz 以上，压在人声下
+    就是持续的"噗呲噗呲"（实测 17 个切点毁掉整条片）。要加只放 2-3 个大段落转折，
+    单条、扫频带通 800–4000Hz、电平 ≤ -24dB。
 
 ## 发布前必须做的检查
 
 - 事实：每个结论句都能被素材证明（尤其别写与"全损/失效"冲突的表述）
 - 合规：无绝对化用语、无编造数字、打码完整、AI 声明已勾选
 - 技术：标题长度、短标题长度、封面 3:4、tags 不带 `#`
+- **音频：`python -m autopilot qc out/final.mp4` 必须 5 项全 PASS**（片尾静音/削波/瞬态/频谱）
 - 发布后：先去后台确认真实状态，**退出码非 0 不代表没发出去**，确认后再决定是否重发
 
-详细清单见 `docs/05-compliance.md`。
+详细清单见 `docs/05-compliance.md`、`docs/06-audio-rules.md`、`docs/07-brief-checklist.md`。
 
 ## 常见故障速查
 

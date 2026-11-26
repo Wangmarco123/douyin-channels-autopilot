@@ -4,6 +4,7 @@
   doctor                      环境自检
   build <storyboard.json>     出成片
   cover <cover.json>          出 3:4 封面
+  qc    <final.mp4>           发布前音频质检门（5 项，不过不发）
   publish douyin|channels     发布（含前置校验）
   login  douyin|channels      扫码登录
   check  douyin|channels      检查登录态
@@ -13,7 +14,7 @@ import json
 import os
 import sys
 
-from . import config, engine, publish
+from . import config, engine, publish, qc
 from . import cards as cardmod
 
 
@@ -78,6 +79,11 @@ def cmd_check(cfg, a):
     return 0 if ok else 1
 
 
+def cmd_qc(cfg, a):
+    return qc.run(a.video, a.expect_duration, a.max_transients,
+                  a.centroid_limit, a.json)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="autopilot", description="抖音 / 视频号 竖版短视频自动化")
     ap.add_argument("-c", "--config", help="config.json 路径")
@@ -92,6 +98,17 @@ def main(argv=None):
     c = sp.add_parser("cover", help="按配置出 3:4 封面")
     c.add_argument("cover")
     c.set_defaults(fn=cmd_cover)
+
+    q = sp.add_parser("qc", help="发布前音频质检门（5 项，不过不发）")
+    q.add_argument("video")
+    q.add_argument("--expect-duration", dest="expect_duration", type=float, default=None,
+                   help="期望时长；默认按视频流时长比对")
+    q.add_argument("--max-transients", dest="max_transients", type=int, default=4,
+                   help="允许的周期性瞬态数（默认 4）")
+    q.add_argument("--centroid-limit", dest="centroid_limit", type=float, default=6000.0,
+                   help="瞬态频谱重心上限 Hz（默认 6000）")
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(fn=cmd_qc)
 
     for name, fn in (("publish", cmd_publish), ("login", cmd_login), ("check", cmd_check)):
         p = sp.add_parser(name, help=name)
